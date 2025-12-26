@@ -35,13 +35,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshData = async () => {
     try {
+      // Run queries independently so one failure doesn't block the rest
       const [
-        { data: empData },
-        { data: deptData },
-        { data: evalData },
-        { data: noteData },
-        { data: leaveData },
-        { data: obsData }
+        { data: empData, error: empErr },
+        { data: deptData, error: deptErr },
+        { data: evalData, error: evalErr },
+        { data: noteData, error: noteErr },
+        { data: leaveData, error: leaveErr },
+        { data: obsData, error: obsErr }
       ] = await Promise.all([
         supabase.from('employees').select('*'),
         supabase.from('departments').select('name'),
@@ -51,20 +52,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.from('behaviour_issues').select('*')
       ]);
 
+      if (empErr) console.warn("Failed to fetch employees:", empErr);
       if (empData) setEmployees(empData.map(e => ({ 
         id: e.id,
-        name: e.name,
-        username: e.username,
-        role: e.role,
-        department: e.department,
-        email: e.email,
-        active: e.active,
-        overallScore: e.overall_score, 
-        hireDate: e.hire_date, 
+        name: e.name || 'Unknown',
+        username: e.username || 'user',
+        role: e.role || 'employee',
+        department: e.department || 'Unassigned',
+        email: e.email || '',
+        active: e.active ?? true,
+        overallScore: e.overall_score ?? 0, 
+        hireDate: e.hire_date || new Date().toISOString().split('T')[0], 
         profilePicture: e.profile_picture 
       })));
+
+      if (deptErr) console.warn("Failed to fetch departments:", deptErr);
       if (deptData) setDepartments(deptData.map(d => d.name));
+
+      if (evalErr) console.warn("Failed to fetch evaluations:", evalErr);
       if (evalData) setEvaluations(evalData);
+
+      if (noteErr) console.warn("Failed to fetch work issues:", noteErr);
       if (noteData) setNotes(noteData.map(n => ({ 
         id: n.id,
         employeeId: n.employee_id, 
@@ -74,6 +82,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         title: n.title,
         text: n.text
       })));
+
+      if (leaveErr) console.warn("Failed to fetch leaves:", leaveErr);
       if (leaveData) setLeaves(leaveData.map(l => ({ 
         id: l.id,
         employeeId: l.employee_id,
@@ -82,6 +92,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         duration: l.duration,
         comment: l.comment
       })));
+
+      if (obsErr) console.warn("Failed to fetch observations:", obsErr);
       if (obsData) setObservations(obsData.map(o => ({ 
         id: o.id,
         employeeId: o.employee_id, 
@@ -91,7 +103,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         actionPlan: o.action_plan 
       })));
     } catch (err) {
-      console.error("Critical: Data Sync Failed", err);
+      console.error("Critical: Data Sync Sync Failure", err);
     }
   };
 
@@ -100,8 +112,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const addEmployee = async (emp: Omit<Employee, 'id'>) => {
-    // Standard profiles should be created via Auth trigger, 
-    // but this allows manual profile creation for existing auth users
     const { error } = await supabase.from('employees').insert([{
       username: emp.username,
       name: emp.name,
@@ -114,6 +124,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile_picture: emp.profilePicture
     }]);
     if (!error) refreshData();
+    else console.error("Add employee failed:", error);
   };
 
   const updateEmployee = async (emp: Employee) => {
@@ -128,11 +139,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile_picture: emp.profilePicture
     }).eq('id', emp.id);
     if (!error) refreshData();
+    else console.error("Update employee failed:", error);
   };
 
   const deleteEmployee = async (id: string) => {
     const { error } = await supabase.from('employees').delete().eq('id', id);
     if (!error) refreshData();
+    else console.error("Delete employee failed:", error);
   };
   
   const addEvaluation = async (ev: Omit<PerformanceEvaluation, 'id'>) => {

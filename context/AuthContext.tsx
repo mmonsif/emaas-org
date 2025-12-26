@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { User, UserRole } from '../types';
 import { supabase } from '../services/supabase';
 
@@ -15,28 +15,43 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const initializationStarted = useRef(false);
 
   useEffect(() => {
-    // Initial session check
-    const checkSession = async () => {
+    if (initializationStarted.current) return;
+    initializationStarted.current = true;
+
+    // Safety timeout: Never let the app hang on "Loading session" for more than 5 seconds
+    const safetyTimer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Auth initialization timed out. Forcing UI load.");
+        setIsLoading(false);
+      }
+    }, 5000);
+
+    const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
         
+        if (error) {
+          console.error("Supabase session error:", error);
+        }
+
         if (session?.user) {
           await fetchUserProfile(session.user);
         }
       } catch (e) {
-        console.error("Session initialization failed:", e);
+        console.error("Critical Auth initialization failure:", e);
       } finally {
-        // Ensure we stop loading even if an error occurs
         setIsLoading(false);
+        clearTimeout(safetyTimer);
       }
     };
 
-    checkSession();
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.debug("Auth state changed:", event);
       if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
         await fetchUserProfile(session.user);
         setIsLoading(false);
@@ -46,7 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimer);
+    };
   }, []);
 
   const fetchUserProfile = async (authUser: any) => {
@@ -60,14 +78,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (data && !error) {
         setUser({
           id: data.id,
-          username: data.username,
-          name: data.name,
-          role: data.role as UserRole,
-          department: data.department,
-          email: data.email
+          username: data.username || authUser.email.split('@')[0],
+          name: data.name || 'User',
+          role: (data.role as UserRole) || 'employee',
+          department: data.department || 'Ramp Operations',
+          email: data.email || authUser.email
         });
       } else {
-        // Auto-provision profile if missing
+        // Create profile if it doesn't exist (Auto-provisioning)
         const defaultProfile = {
           id: authUser.id,
           username: authUser.email.split('@')[0],
@@ -94,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     } catch (e) {
-      console.error("Error retrieving user profile context:", e);
+      console.error("fetchUserProfile failed:", e);
     }
   };
 
@@ -106,22 +124,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (error) {
-        if (error.message.includes("Email not confirmed")) {
+        if (error.message.toLowerCase().includes("email not confirmed")) {
           return { 
             success: false, 
-            message: "Email not confirmed. Please check your inbox or disable 'Confirm Email' in Supabase Dashboard." 
+            message: "Email not confirmed. Please check your inbox for a verification link or disable 'Confirm Email' in your Supabase Auth settings." 
           };
         }
-        throw error;
+        return { success: false, message: error.message };
       }
 
       if (data.user) {
         return { success: true };
       }
-      return { success: false, message: "Authentication failed. Please check your credentials." };
+      return { success: false, message: "Authentication failed. No user returned." };
     } catch (error: any) {
-      console.error("Authentication process failed:", error);
-      return { success: false, message: error.message || "An unexpected error occurred." };
+      return { success: false, message: error.message || "An unexpected network error occurred." };
     }
   };
 
