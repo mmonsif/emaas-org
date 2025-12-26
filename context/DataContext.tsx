@@ -36,12 +36,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshData = async () => {
     try {
       const [
-        { data: empData, error: empErr },
-        { data: deptData, error: deptErr },
-        { data: evalData, error: evalErr },
-        { data: noteData, error: noteErr },
-        { data: leaveData, error: leaveErr },
-        { data: obsData, error: obsErr }
+        { data: empData },
+        { data: deptData },
+        { data: evalData },
+        { data: noteData },
+        { data: leaveData },
+        { data: obsData }
       ] = await Promise.all([
         supabase.from('employees').select('*'),
         supabase.from('departments').select('name'),
@@ -51,25 +51,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.from('behaviour_issues').select('*')
       ]);
 
-      if (empErr) console.warn("Failed to fetch employees:", empErr);
       if (empData) setEmployees(empData.map(e => ({ 
         id: e.id,
-        name: e.name || 'Unknown',
-        username: e.username || 'user',
-        role: e.role || 'employee',
-        department: e.department || 'Unassigned',
-        email: e.email || '',
-        password: e.password || '',
-        active: e.active ?? true,
-        overallScore: e.overall_score ?? 0, 
-        hireDate: e.hire_date || new Date().toISOString().split('T')[0], 
+        name: e.name,
+        username: e.username,
+        role: e.role,
+        department: e.department,
+        email: e.email,
+        password: e.password,
+        active: e.active,
+        overallScore: e.overall_score, 
+        hireDate: e.hire_date, 
         profilePicture: e.profile_picture 
       })));
 
-      if (deptErr) console.warn("Failed to fetch departments:", deptErr);
       if (deptData) setDepartments(deptData.map(d => d.name));
 
-      if (evalErr) console.warn("Failed to fetch evaluations:", evalErr);
       if (evalData) setEvaluations(evalData.map(ev => ({
         id: ev.id,
         employeeId: ev.employee_id,
@@ -80,7 +77,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         rating: ev.rating
       })));
 
-      if (noteErr) console.warn("Failed to fetch work issues:", noteErr);
       if (noteData) setNotes(noteData.map(n => ({ 
         id: n.id,
         employeeId: n.employee_id, 
@@ -91,7 +87,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         text: n.text
       })));
 
-      if (leaveErr) console.warn("Failed to fetch leaves:", leaveErr);
       if (leaveData) setLeaves(leaveData.map(l => ({ 
         id: l.id,
         employeeId: l.employee_id,
@@ -101,7 +96,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         comment: l.comment
       })));
 
-      if (obsErr) console.warn("Failed to fetch observations:", obsErr);
       if (obsData) setObservations(obsData.map(o => ({ 
         id: o.id,
         employeeId: o.employee_id, 
@@ -126,14 +120,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: emp.role,
       department: emp.department,
       email: emp.email,
-      password: emp.password || 'password', // Default password for new users
+      password: emp.password || 'password',
       hire_date: emp.hireDate,
       active: emp.active,
       overall_score: emp.overallScore,
       profile_picture: emp.profilePicture
     }]);
     if (!error) refreshData();
-    else console.error("Add employee failed:", error);
   };
 
   const updateEmployee = async (emp: Employee) => {
@@ -149,13 +142,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profile_picture: emp.profilePicture
     }).eq('id', emp.id);
     if (!error) refreshData();
-    else console.error("Update employee failed:", error);
   };
 
   const deleteEmployee = async (id: string) => {
     const { error } = await supabase.from('employees').delete().eq('id', id);
     if (!error) refreshData();
-    else console.error("Delete employee failed:", error);
   };
   
   const addEvaluation = async (ev: Omit<PerformanceEvaluation, 'id'>) => {
@@ -167,7 +158,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       summary: ev.summary,
       rating: ev.rating
     }]);
-    if (error) console.error("Add evaluation failed:", error);
+    if (error) console.error("Log error:", error);
     else refreshData();
   };
 
@@ -180,7 +171,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       title: note.title,
       text: note.text
     }]);
-    if (error) console.error("Add work issue failed:", error);
+    if (error) console.error("Log error:", error);
     else refreshData();
   };
 
@@ -192,7 +183,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       duration: leave.duration,
       comment: leave.comment
     }]);
-    if (error) console.error("Add attendance log failed:", error);
+    if (error) console.error("Log error:", error);
     else refreshData();
   };
 
@@ -204,23 +195,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: obs.status,
       action_plan: obs.actionPlan
     }]);
-    if (error) console.error("Add behaviour issue failed:", error);
+    if (error) console.error("Log error:", error);
     else refreshData();
   };
 
   const addDepartment = async (name: string) => {
-    const { error } = await supabase.from('departments').insert([{ name }]);
-    if (!error) refreshData();
+    await supabase.from('departments').insert([{ name }]);
+    refreshData();
   };
 
   const deleteDepartment = async (name: string) => {
-    const { error } = await supabase.from('departments').delete().eq('name', name);
-    if (!error) refreshData();
+    await supabase.from('departments').delete().eq('name', name);
+    refreshData();
   };
 
   const updateDepartment = async (oldName: string, newName: string) => {
-    const { error } = await supabase.from('departments').update({ name: newName }).eq('name', oldName);
-    if (!error) refreshData();
+    await supabase.from('departments').update({ name: newName }).eq('name', oldName);
+    refreshData();
   };
 
   return (
