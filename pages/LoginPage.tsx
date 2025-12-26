@@ -17,11 +17,13 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
-    const success = await login(email, password, role);
-    if (success) {
+    
+    const result = await login(email, password, role);
+    
+    if (result.success) {
       navigate('/');
     } else {
-      setError('Invalid credentials for the selected role or account inactive.');
+      setError(result.message || 'Invalid credentials or account inactive.');
       setIsSubmitting(false);
     }
   };
@@ -52,8 +54,9 @@ const LoginPage: React.FC = () => {
 
         <form onSubmit={handleLogin} className="space-y-4">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-xs font-bold rounded-lg text-center animate-pulse">
-              {error}
+            <div className="p-4 bg-red-50 border border-red-100 text-red-600 text-xs font-bold rounded-xl text-center animate-in fade-in slide-in-from-top-2">
+              <span className="block mb-1">⚠️ Access Denied</span>
+              <span className="font-medium opacity-80">{error}</span>
             </div>
           )}
           

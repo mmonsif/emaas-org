@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase';
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string, role: UserRole) => Promise<boolean>;
+  login: (email: string, password: string, role: UserRole) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -19,20 +19,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Initial session check
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await fetchUserProfile(session.user);
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        
+        if (session?.user) {
+          await fetchUserProfile(session.user);
+        }
+      } catch (e) {
+        console.error("Session initialization failed:", e);
+      } finally {
+        // Ensure we stop loading even if an error occurs
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     checkSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
         await fetchUserProfile(session.user);
+        setIsLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
+        setIsLoading(false);
       }
     });
 
@@ -57,8 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           email: data.email
         });
       } else {
-        // If the record is missing in the employees table, auto-create a basic one
-        // This handles users created in Supabase Auth that don't have a profile record yet.
+        // Auto-provision profile if missing
         const defaultProfile = {
           id: authUser.id,
           username: authUser.email.split('@')[0],
@@ -71,7 +80,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           hire_date: new Date().toISOString().split('T')[0]
         };
         
-        const { error: insertError } = await supabase.from('employees').insert([defaultProfile]);
+        const { error: insertError } = await supabase.from('employees').upsert([defaultProfile]);
         
         if (!insertError) {
           setUser({
@@ -96,15 +105,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password,
       });
 
-      if (error) throw error;
-      if (data.user) {
-        // fetchUserProfile will be triggered by onAuthStateChange
-        return true;
+      if (error) {
+        if (error.message.includes("Email not confirmed")) {
+          return { 
+            success: false, 
+            message: "Email not confirmed. Please check your inbox or disable 'Confirm Email' in Supabase Dashboard." 
+          };
+        }
+        throw error;
       }
-      return false;
-    } catch (error) {
+
+      if (data.user) {
+        return { success: true };
+      }
+      return { success: false, message: "Authentication failed. Please check your credentials." };
+    } catch (error: any) {
       console.error("Authentication process failed:", error);
-      return false;
+      return { success: false, message: error.message || "An unexpected error occurred." };
     }
   };
 
