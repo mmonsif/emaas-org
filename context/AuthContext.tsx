@@ -21,7 +21,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        await fetchUserProfile(session.user.id);
+        await fetchUserProfile(session.user);
       }
       setIsLoading(false);
     };
@@ -30,7 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        await fetchUserProfile(session.user.id);
+        await fetchUserProfile(session.user);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
       }
@@ -39,13 +39,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (authUser: any) => {
     try {
       const { data, error } = await supabase
         .from('employees')
         .select('*')
-        .eq('id', userId)
-        .single();
+        .eq('id', authUser.id)
+        .maybeSingle();
 
       if (data && !error) {
         setUser({
@@ -56,9 +56,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           department: data.department,
           email: data.email
         });
+      } else {
+        // If the record is missing in the employees table, auto-create a basic one
+        // This handles users created in Supabase Auth that don't have a profile record yet.
+        const defaultProfile = {
+          id: authUser.id,
+          username: authUser.email.split('@')[0],
+          name: authUser.email.split('@')[0],
+          role: 'employee', 
+          department: 'Ramp Operations',
+          email: authUser.email,
+          overall_score: 80,
+          active: true,
+          hire_date: new Date().toISOString().split('T')[0]
+        };
+        
+        const { error: insertError } = await supabase.from('employees').insert([defaultProfile]);
+        
+        if (!insertError) {
+          setUser({
+            id: defaultProfile.id,
+            username: defaultProfile.username,
+            name: defaultProfile.name,
+            role: defaultProfile.role as UserRole,
+            department: defaultProfile.department,
+            email: defaultProfile.email
+          });
+        }
       }
     } catch (e) {
-      console.error("Error fetching user profile:", e);
+      console.error("Error retrieving user profile context:", e);
     }
   };
 
@@ -71,14 +98,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) throw error;
       if (data.user) {
-        // Double check profile role matches requested role if necessary, 
-        // or just let the app handle visibility based on fetched role
-        await fetchUserProfile(data.user.id);
+        // fetchUserProfile will be triggered by onAuthStateChange
         return true;
       }
       return false;
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Authentication process failed:", error);
       return false;
     }
   };
