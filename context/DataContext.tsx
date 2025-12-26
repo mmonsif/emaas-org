@@ -35,7 +35,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const refreshData = async () => {
     try {
-      // Run queries independently so one failure doesn't block the rest
       const [
         { data: empData, error: empErr },
         { data: deptData, error: deptErr },
@@ -60,6 +59,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         role: e.role || 'employee',
         department: e.department || 'Unassigned',
         email: e.email || '',
+        password: e.password || '',
         active: e.active ?? true,
         overallScore: e.overall_score ?? 0, 
         hireDate: e.hire_date || new Date().toISOString().split('T')[0], 
@@ -70,7 +70,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (deptData) setDepartments(deptData.map(d => d.name));
 
       if (evalErr) console.warn("Failed to fetch evaluations:", evalErr);
-      if (evalData) setEvaluations(evalData);
+      if (evalData) setEvaluations(evalData.map(ev => ({
+        id: ev.id,
+        employeeId: ev.employee_id,
+        year: ev.year,
+        date: ev.date,
+        score: ev.score,
+        summary: ev.summary,
+        rating: ev.rating
+      })));
 
       if (noteErr) console.warn("Failed to fetch work issues:", noteErr);
       if (noteData) setNotes(noteData.map(n => ({ 
@@ -103,7 +111,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         actionPlan: o.action_plan 
       })));
     } catch (err) {
-      console.error("Critical: Data Sync Sync Failure", err);
+      console.error("Critical: Data Sync Failure", err);
     }
   };
 
@@ -118,6 +126,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: emp.role,
       department: emp.department,
       email: emp.email,
+      password: emp.password || 'password', // Default password for new users
       hire_date: emp.hireDate,
       active: emp.active,
       overall_score: emp.overallScore,
@@ -133,6 +142,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: emp.role,
       department: emp.department,
       email: emp.email,
+      password: emp.password,
       hire_date: emp.hireDate,
       active: emp.active,
       overall_score: emp.overallScore,
@@ -157,7 +167,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       summary: ev.summary,
       rating: ev.rating
     }]);
-    if (!error) refreshData();
+    if (error) console.error("Add evaluation failed:", error);
+    else refreshData();
   };
 
   const addNote = async (note: Omit<ManagerNote, 'id'>) => {
@@ -169,7 +180,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       title: note.title,
       text: note.text
     }]);
-    if (!error) refreshData();
+    if (error) console.error("Add work issue failed:", error);
+    else refreshData();
   };
 
   const addLeave = async (leave: Omit<LeaveRecord, 'id'>) => {
@@ -180,7 +192,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       duration: leave.duration,
       comment: leave.comment
     }]);
-    if (!error) refreshData();
+    if (error) console.error("Add attendance log failed:", error);
+    else refreshData();
   };
 
   const addObservation = async (obs: Omit<Observation, 'id'>) => {
@@ -191,7 +204,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       status: obs.status,
       action_plan: obs.actionPlan
     }]);
-    if (!error) refreshData();
+    if (error) console.error("Add behaviour issue failed:", error);
+    else refreshData();
   };
 
   const addDepartment = async (name: string) => {

@@ -20,9 +20,9 @@ const EmployeeFormPage: React.FC = () => {
     department: departments[0] || '',
     role: '',
     email: '',
+    password: '',
     hireDate: new Date().toISOString().split('T')[0],
     username: '',
-    password: '',
     active: true,
     overallScore: 80,
     profilePicture: ''
@@ -122,6 +122,10 @@ const EmployeeFormPage: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Terminal Username</label>
                 <input type="text" required value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold placeholder:text-slate-300" placeholder="u_jarcher" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Security Key (Password)</label>
+                <input type="password" required value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold" placeholder="••••••••" />
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">

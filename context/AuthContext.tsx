@@ -1,12 +1,12 @@
 
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '../types';
 import { supabase } from '../services/supabase';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string, role: UserRole) => Promise<{ success: boolean; message?: string }>;
-  logout: () => Promise<void>;
+  logout: () => void;
   isLoading: boolean;
 }
 
@@ -15,136 +15,68 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const initializationStarted = useRef(false);
 
   useEffect(() => {
-    if (initializationStarted.current) return;
-    initializationStarted.current = true;
-
-    // Safety timeout: Never let the app hang on "Loading session" for more than 5 seconds
-    const safetyTimer = setTimeout(() => {
-      if (isLoading) {
-        console.warn("Auth initialization timed out. Forcing UI load.");
-        setIsLoading(false);
-      }
-    }, 5000);
-
-    const initializeAuth = async () => {
+    // Persistent login check via localStorage
+    const savedUser = localStorage.getItem('skyport_user');
+    if (savedUser) {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Supabase session error:", error);
-        }
-
-        if (session?.user) {
-          await fetchUserProfile(session.user);
-        }
+        setUser(JSON.parse(savedUser));
       } catch (e) {
-        console.error("Critical Auth initialization failure:", e);
-      } finally {
-        setIsLoading(false);
-        clearTimeout(safetyTimer);
+        localStorage.removeItem('skyport_user');
       }
-    };
-
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.debug("Auth state changed:", event);
-      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user) {
-        await fetchUserProfile(session.user);
-        setIsLoading(false);
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(safetyTimer);
-    };
-  }, []);
-
-  const fetchUserProfile = async (authUser: any) => {
-    try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .eq('id', authUser.id)
-        .maybeSingle();
-
-      if (data && !error) {
-        setUser({
-          id: data.id,
-          username: data.username || authUser.email.split('@')[0],
-          name: data.name || 'User',
-          role: (data.role as UserRole) || 'employee',
-          department: data.department || 'Ramp Operations',
-          email: data.email || authUser.email
-        });
-      } else {
-        // Create profile if it doesn't exist (Auto-provisioning)
-        const defaultProfile = {
-          id: authUser.id,
-          username: authUser.email.split('@')[0],
-          name: authUser.email.split('@')[0],
-          role: 'employee', 
-          department: 'Ramp Operations',
-          email: authUser.email,
-          overall_score: 80,
-          active: true,
-          hire_date: new Date().toISOString().split('T')[0]
-        };
-        
-        const { error: insertError } = await supabase.from('employees').upsert([defaultProfile]);
-        
-        if (!insertError) {
-          setUser({
-            id: defaultProfile.id,
-            username: defaultProfile.username,
-            name: defaultProfile.name,
-            role: defaultProfile.role as UserRole,
-            department: defaultProfile.department,
-            email: defaultProfile.email
-          });
-        }
-      }
-    } catch (e) {
-      console.error("fetchUserProfile failed:", e);
     }
-  };
+    setIsLoading(false);
+  }, []);
 
   const login = async (email: string, password: string, requestedRole: UserRole) => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // Manual query to employees table for authentication
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('email', email)
+        .eq('active', true)
+        .maybeSingle();
 
-      if (error) {
-        if (error.message.toLowerCase().includes("email not confirmed")) {
-          return { 
-            success: false, 
-            message: "Email not confirmed. Please check your inbox for a verification link or disable 'Confirm Email' in your Supabase Auth settings." 
-          };
-        }
-        return { success: false, message: error.message };
+      if (error) throw error;
+
+      if (!data) {
+        return { success: false, message: "User not found or account inactive." };
       }
 
-      if (data.user) {
-        return { success: true };
+      // Plain text check (In production, use hashed passwords)
+      if (data.password !== password) {
+        return { success: false, message: "Invalid credentials." };
       }
-      return { success: false, message: "Authentication failed. No user returned." };
-    } catch (error: any) {
-      return { success: false, message: error.message || "An unexpected network error occurred." };
+
+      // Check role authorization
+      if (data.role !== requestedRole && requestedRole !== 'employee') {
+        return { success: false, message: `Access denied. You do not have ${requestedRole} privileges.` };
+      }
+
+      const authenticatedUser: User = {
+        id: data.id,
+        username: data.username,
+        name: data.name,
+        role: data.role as UserRole,
+        department: data.department,
+        email: data.email
+      };
+
+      setUser(authenticatedUser);
+      localStorage.setItem('skyport_user', JSON.stringify(authenticatedUser));
+      return { success: true };
+
+    } catch (err: any) {
+      console.error("Manual Auth Error:", err);
+      return { success: false, message: err.message || "Connection failure." };
     }
   };
 
-  const logout = async () => {
-    await supabase.auth.signOut();
+  const logout = () => {
     setUser(null);
+    localStorage.removeItem('skyport_user');
   };
 
   return (
