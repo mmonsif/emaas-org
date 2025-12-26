@@ -2,7 +2,7 @@
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { DataProvider } from './context/DataProvider'; // assuming fix to path
+import { DataProvider } from './context/DataContext';
 import Layout from './components/Layout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -11,13 +11,10 @@ import EmployeeDetailPage from './pages/EmployeeDetailPage';
 import EmployeeFormPage from './pages/EmployeeFormPage';
 import SettingsPage from './pages/SettingsPage';
 
-// Simple fix for data provider import if needed
-import { DataProvider as AppDataProvider } from './context/DataContext';
-
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useAuth();
   
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center">Loading session...</div>;
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center font-black uppercase tracking-widest text-slate-400">Loading session...</div>;
   if (!user) return <Navigate to="/login" replace />;
   
   return <Layout>{children}</Layout>;
@@ -26,7 +23,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <AppDataProvider>
+      <DataProvider>
         <Router>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -41,7 +38,7 @@ const App: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>
-      </AppDataProvider>
+      </DataProvider>
     </AuthProvider>
   );
 };

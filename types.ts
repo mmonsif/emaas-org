@@ -48,7 +48,6 @@ export interface Observation {
   date: string;
   description: string;
   status: 'open' | 'closed';
-  followUpDate?: string;
   actionPlan?: string;
 }
 
