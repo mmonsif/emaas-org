@@ -51,6 +51,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         supabase.from('behaviour_issues').select('*')
       ]);
 
+      // Helper to find latest score
+      const getLatestScore = (empId: string, defaultScore: number) => {
+        if (!evalData) return defaultScore;
+        const empEvals = evalData
+          .filter(ev => ev.employee_id === empId)
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return empEvals.length > 0 ? empEvals[0].score : defaultScore;
+      };
+
       if (empData) setEmployees(empData.map(e => ({ 
         id: e.id,
         name: e.name,
@@ -60,7 +69,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email: e.email,
         password: e.password,
         active: e.active,
-        overallScore: e.overall_score, 
+        overallScore: getLatestScore(e.id, e.overall_score), // Use dynamic calculation
         hireDate: e.hire_date, 
         profilePicture: e.profile_picture 
       })));
@@ -117,7 +126,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.from('employees').insert([{
       username: emp.username,
       name: emp.name,
-      role: emp.role,
+      role: emp.role, // This comes from accessLevel in the form
       department: emp.department,
       email: emp.email,
       password: emp.password || 'password',
@@ -126,7 +135,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       overall_score: emp.overallScore,
       profile_picture: emp.profilePicture
     }]);
-    if (!error) refreshData();
+    if (error) {
+      console.error("Supabase error adding employee:", error);
+      throw error;
+    }
+    await refreshData();
   };
 
   const updateEmployee = async (emp: Employee) => {
@@ -141,12 +154,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       overall_score: emp.overallScore,
       profile_picture: emp.profilePicture
     }).eq('id', emp.id);
-    if (!error) refreshData();
+    if (!error) await refreshData();
   };
 
   const deleteEmployee = async (id: string) => {
     const { error } = await supabase.from('employees').delete().eq('id', id);
-    if (!error) refreshData();
+    if (!error) await refreshData();
   };
   
   const addEvaluation = async (ev: Omit<PerformanceEvaluation, 'id'>) => {
@@ -159,7 +172,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       rating: ev.rating
     }]);
     if (error) console.error("Log error:", error);
-    else refreshData();
+    else await refreshData();
   };
 
   const addNote = async (note: Omit<ManagerNote, 'id'>) => {
@@ -172,7 +185,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       text: note.text
     }]);
     if (error) console.error("Log error:", error);
-    else refreshData();
+    else await refreshData();
   };
 
   const addLeave = async (leave: Omit<LeaveRecord, 'id'>) => {
@@ -184,7 +197,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       comment: leave.comment
     }]);
     if (error) console.error("Log error:", error);
-    else refreshData();
+    else await refreshData();
   };
 
   const addObservation = async (obs: Omit<Observation, 'id'>) => {
@@ -196,22 +209,22 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       action_plan: obs.actionPlan
     }]);
     if (error) console.error("Log error:", error);
-    else refreshData();
+    else await refreshData();
   };
 
   const addDepartment = async (name: string) => {
     await supabase.from('departments').insert([{ name }]);
-    refreshData();
+    await refreshData();
   };
 
   const deleteDepartment = async (name: string) => {
     await supabase.from('departments').delete().eq('name', name);
-    refreshData();
+    await refreshData();
   };
 
   const updateDepartment = async (oldName: string, newName: string) => {
     await supabase.from('departments').update({ name: newName }).eq('name', oldName);
-    refreshData();
+    await refreshData();
   };
 
   return (

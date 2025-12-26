@@ -35,7 +35,7 @@ const LoginPage: React.FC = () => {
         
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-indigo-600 rounded-2xl text-white font-bold text-2xl mb-4 shadow-lg">SP</div>
-          <h2 className="text-2xl font-black text-slate-900 tracking-tight">SkyPort Login</h2>
+          <h2 className="text-2xl font-black text-slate-900 tracking-tight">Staff Performance</h2>
           <p className="text-slate-500 text-sm mt-1">Personnel Management System</p>
         </div>
 
@@ -68,7 +68,7 @@ const LoginPage: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm font-bold"
               required
-              placeholder="name@skyport.com"
+              placeholder="name@company.com"
             />
           </div>
 

@@ -58,7 +58,7 @@ const EmployeeDetailPage: React.FC = () => {
     const html = `
       <html>
         <head>
-          <title>Executive Summary - ${employee.name}</title>
+          <title>Personnel Summary - ${employee.name}</title>
           <script src="https://cdn.tailwindcss.com"></script>
           <style>
             @media print { .no-print { display: none; } body { background: white; } }
@@ -114,41 +114,6 @@ const EmployeeDetailPage: React.FC = () => {
                   `).join('')}
                 </div>
               </div>
-
-              <div class="pdf-card">
-                <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-2">Work Issues</h2>
-                <div class="space-y-4">
-                  ${empWorkIssues.length === 0 ? '<p class="text-xs text-slate-400 italic">No work issues noted.</p>' : empWorkIssues.map(n => `
-                    <div class="bg-slate-900 text-white p-4 rounded-2xl">
-                      <div class="flex justify-between items-center mb-2">
-                        <p class="font-black text-[10px] uppercase tracking-widest text-indigo-400">${n.title}</p>
-                        <p class="text-[8px] opacity-40">${n.date}</p>
-                      </div>
-                      <p class="text-[10px] leading-relaxed opacity-80">${n.text}</p>
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <div class="pdf-card border-l-8 border-l-amber-400">
-                <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-2">Behaviour Issues</h2>
-                <div class="space-y-4">
-                  ${empBehaviourIssues.length === 0 ? '<p class="text-xs text-slate-400 italic">No behavioural incidents.</p>' : empBehaviourIssues.map(o => `
-                    <div class="bg-amber-50 p-4 rounded-2xl border border-amber-100">
-                      <div class="flex justify-between items-center mb-2">
-                        <p class="text-[9px] font-black text-amber-700 uppercase tracking-widest">${o.date}</p>
-                        <span class="text-[8px] font-black px-1.5 py-0.5 rounded bg-amber-200 text-amber-800">${o.status}</span>
-                      </div>
-                      <p class="text-[10px] font-medium text-slate-700 mb-2">${o.description}</p>
-                      ${o.actionPlan ? `<p class="text-[8px] font-bold text-amber-600 bg-white/50 p-2 rounded-lg">Plan: ${o.actionPlan}</p>` : ''}
-                    </div>
-                  `).join('')}
-                </div>
-              </div>
-            </div>
-
-            <div class="fixed bottom-10 right-10 no-print">
-              <button onclick="window.print()" class="px-10 py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-2xl hover:bg-indigo-700 transition-all">Print Record</button>
             </div>
           </div>
         </body>
@@ -158,10 +123,10 @@ const EmployeeDetailPage: React.FC = () => {
     reportWindow.document.close();
   };
 
-  const handleSaveEvaluation = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveEvaluation = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    addEvaluation({
+    await addEvaluation({
       employeeId: id!,
       year: parseInt(fd.get('year') as string),
       date: new Date().toISOString().split('T')[0],
@@ -172,10 +137,10 @@ const EmployeeDetailPage: React.FC = () => {
     setShowForm(null);
   };
 
-  const handleSaveLeave = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveLeave = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    addLeave({
+    await addLeave({
       employeeId: id!,
       date: fd.get('date') as string,
       type: fd.get('type') as LeaveType,
@@ -185,10 +150,10 @@ const EmployeeDetailPage: React.FC = () => {
     setShowForm(null);
   };
 
-  const handleSaveBehaviourIssue = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveBehaviourIssue = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    addObservation({
+    await addObservation({
       employeeId: id!,
       date: fd.get('date') as string,
       description: fd.get('description') as string,
@@ -198,10 +163,10 @@ const EmployeeDetailPage: React.FC = () => {
     setShowForm(null);
   };
 
-  const handleSaveWorkIssue = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSaveWorkIssue = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
-    addNote({
+    await addNote({
       employeeId: id!,
       date: new Date().toISOString().split('T')[0],
       authorId: user!.id,
@@ -213,39 +178,44 @@ const EmployeeDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 pb-10">
+    <div className="max-w-7xl mx-auto pb-20 animate-in fade-in duration-700">
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        <div className="w-full lg:w-96 shrink-0 space-y-6">
+        {/* Sidebar Info - Sticky on desktop */}
+        <div className="w-full lg:w-96 shrink-0 space-y-6 lg:sticky lg:top-8">
           <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 text-center">
             <div className="w-32 h-32 rounded-[2.5rem] bg-indigo-600 text-white flex items-center justify-center text-4xl font-black mb-6 shadow-xl border-4 border-slate-50 mx-auto overflow-hidden">
-              {employee.profilePicture ? <img src={employee.profilePicture} className="w-full h-full object-cover" /> : employee.name.charAt(0)}
+              {employee.profilePicture ? <img src={employee.profilePicture} className="w-full h-full object-cover" alt={employee.name} /> : employee.name.charAt(0)}
             </div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight">{employee.name}</h2>
             <p className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.25em] mt-2">{employee.role}</p>
             <div className="mt-8 grid grid-cols-1 gap-3 w-full">
               <button onClick={handleRunAiAnalysis} disabled={isAiLoading} className="flex items-center justify-center w-full px-6 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50">
-                {isAiLoading ? "Analyzing..." : "✨ AI Talent Insights"}
+                {isAiLoading ? "Analyzing..." : "✨ AI Insights"}
               </button>
               <button onClick={handleExportPDF} className="w-full px-6 py-4 bg-slate-50 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-slate-100 hover:bg-slate-100 transition-colors">
-                Export Personnel Report
+                Export Report
               </button>
             </div>
           </div>
+          
+          <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl">
+            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Current Efficiency</p>
+            <h4 className="text-5xl font-black">{employee.overallScore}%</h4>
+            <p className="text-[10px] text-slate-400 mt-2">Based on most recent performance review.</p>
+          </div>
+
           {aiInsight && (
             <div className={`rounded-[2.5rem] p-8 text-white shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden ${aiError ? 'bg-red-900' : 'bg-indigo-600'}`}>
-               <h4 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-4">AI Analysis Report</h4>
+               <h4 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-4">Analysis Results</h4>
                <p className="text-sm leading-relaxed text-indigo-50 font-medium whitespace-pre-wrap">{aiInsight}</p>
                <button onClick={() => setAiInsight(null)} className="mt-6 text-[9px] font-black text-indigo-200 uppercase hover:text-white transition-colors underline decoration-dotted">Dismiss</button>
             </div>
           )}
-          <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl">
-            <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Overall Efficiency</p>
-            <h4 className="text-5xl font-black">{employee.overallScore}%</h4>
-          </div>
         </div>
 
+        {/* Main Log Content */}
         <div className="flex-1 min-w-0 flex flex-col space-y-8">
-           <div className="bg-white p-2 rounded-[2rem] shadow-xl flex gap-2 overflow-x-auto border border-slate-50 no-scrollbar">
+           <div className="bg-white p-2 rounded-[2rem] shadow-xl flex gap-2 overflow-x-auto border border-slate-50 no-scrollbar sticky top-0 z-10">
              <button onClick={() => { setActiveTab('leaves'); setShowForm(null); }} className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'leaves' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Attendance</button>
              {isAdminOrManager && (
                <>
@@ -256,19 +226,16 @@ const EmployeeDetailPage: React.FC = () => {
              )}
            </div>
 
-           <div className="bg-white rounded-[3rem] p-10 shadow-xl border border-slate-50 min-h-[500px]">
+           <div className="bg-white rounded-[3rem] p-10 shadow-xl border border-slate-50">
              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
-               <div>
-                 <h3 className="text-2xl font-black text-slate-900 tracking-tight capitalize">{activeTab.replace('_', ' ')} Registry</h3>
-                 <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Ground Handling Command • Protocol v3.0</p>
-               </div>
+               <h3 className="text-2xl font-black text-slate-900 tracking-tight capitalize">{activeTab.replace('_', ' ')} Registry</h3>
                <button onClick={() => setShowForm(showForm === activeTab ? null : activeTab)} className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center shadow-lg active:scale-95">
-                 {showForm === activeTab ? "Close Form" : `Log ${activeTab.split('_')[0]}`}
+                 {showForm === activeTab ? "Close Form" : `Add Entry`}
                </button>
              </div>
 
              {showForm === 'leaves' && (
-               <form onSubmit={handleSaveLeave} className="mb-10 p-8 bg-indigo-50/50 rounded-[2rem] border border-indigo-100 animate-in slide-in-from-top-4">
+               <form onSubmit={handleSaveLeave} className="mb-10 p-8 bg-indigo-50/50 rounded-[2rem] border border-indigo-100">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                    <div className="space-y-1.5">
                      <label className="text-[10px] font-black text-indigo-600 uppercase tracking-widest ml-1">Date</label>
@@ -287,12 +254,12 @@ const EmployeeDetailPage: React.FC = () => {
                      <input name="duration" type="number" step="0.5" required min="0.5" className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" placeholder="1.0" />
                    </div>
                  </div>
-                 <button type="submit" className="mt-8 w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-indigo-700 transition-all">Commit to Log</button>
+                 <button type="submit" className="mt-8 w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-indigo-700 transition-all">Submit Entry</button>
                </form>
              )}
 
              {showForm === 'evaluations' && (
-               <form onSubmit={handleSaveEvaluation} className="mb-10 p-8 bg-emerald-50/50 rounded-[2rem] border border-emerald-100 animate-in slide-in-from-top-4">
+               <form onSubmit={handleSaveEvaluation} className="mb-10 p-8 bg-emerald-50/50 rounded-[2rem] border border-emerald-100">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                    <div className="space-y-1.5">
                      <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1">Year</label>
@@ -311,8 +278,8 @@ const EmployeeDetailPage: React.FC = () => {
                      <input name="score" type="number" required min="0" max="100" defaultValue="80" className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" />
                    </div>
                    <div className="md:col-span-full space-y-1.5">
-                     <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1">Evaluation Summary</label>
-                     <textarea name="summary" required rows={3} className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" placeholder="Personnel performance breakdown..."></textarea>
+                     <label className="text-[10px] font-black text-emerald-600 uppercase tracking-widest ml-1">Summary</label>
+                     <textarea name="summary" required rows={3} className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" placeholder="Details..."></textarea>
                    </div>
                  </div>
                  <button type="submit" className="mt-8 w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-emerald-700 transition-all">Save Evaluation</button>
@@ -320,15 +287,15 @@ const EmployeeDetailPage: React.FC = () => {
              )}
 
              {showForm === 'work_issues' && (
-               <form onSubmit={handleSaveWorkIssue} className="mb-10 p-8 bg-slate-900 text-white rounded-[2rem] shadow-2xl animate-in slide-in-from-top-4">
+               <form onSubmit={handleSaveWorkIssue} className="mb-10 p-8 bg-slate-900 text-white rounded-[2rem]">
                  <div className="space-y-6">
                    <div className="space-y-1.5">
-                     <label className="text-[10px] font-black text-indigo-300 uppercase tracking-widest ml-1">Issue Title</label>
-                     <input name="title" required className="w-full px-5 py-3 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white outline-none" placeholder="Incident Title" />
+                     <label className="text-[10px] font-black text-indigo-300 uppercase tracking-widest ml-1">Title</label>
+                     <input name="title" required className="w-full px-5 py-3 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white outline-none" placeholder="Issue title" />
                    </div>
                    <div className="space-y-1.5">
-                     <label className="text-[10px] font-black text-indigo-300 uppercase tracking-widest ml-1">Technical Description</label>
-                     <textarea name="text" required rows={3} className="w-full px-5 py-3 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white outline-none" placeholder="Detail the work issue..."></textarea>
+                     <label className="text-[10px] font-black text-indigo-300 uppercase tracking-widest ml-1">Description</label>
+                     <textarea name="text" required rows={3} className="w-full px-5 py-3 bg-white/10 border border-white/20 rounded-xl text-sm font-bold text-white outline-none" placeholder="Details..."></textarea>
                    </div>
                  </div>
                  <button type="submit" className="mt-8 w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-indigo-500 transition-all">Record Issue</button>
@@ -336,10 +303,10 @@ const EmployeeDetailPage: React.FC = () => {
              )}
 
              {showForm === 'behaviour_issues' && (
-               <form onSubmit={handleSaveBehaviourIssue} className="mb-10 p-8 bg-amber-50 rounded-[2rem] border border-amber-200 animate-in slide-in-from-top-4">
+               <form onSubmit={handleSaveBehaviourIssue} className="mb-10 p-8 bg-amber-50 rounded-[2rem] border border-amber-200">
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-1.5">
-                     <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest ml-1">Observation Date</label>
+                     <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest ml-1">Date</label>
                      <input name="date" type="date" required className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" defaultValue={new Date().toISOString().split('T')[0]} />
                    </div>
                    <div className="space-y-1.5">
@@ -350,15 +317,15 @@ const EmployeeDetailPage: React.FC = () => {
                      </select>
                    </div>
                    <div className="md:col-span-full space-y-1.5">
-                     <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest ml-1">Behaviour Issue Detail</label>
-                     <textarea name="description" required rows={3} className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" placeholder="Write the issue here..."></textarea>
+                     <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest ml-1">Description</label>
+                     <textarea name="description" required rows={3} className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" placeholder="Details..."></textarea>
                    </div>
                    <div className="md:col-span-full space-y-1.5">
                      <label className="text-[10px] font-black text-amber-600 uppercase tracking-widest ml-1">Action Plan</label>
-                     <input name="actionPlan" className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" placeholder="Improvement steps..." />
+                     <input name="actionPlan" className="w-full px-5 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold shadow-sm" placeholder="Resolution steps..." />
                    </div>
                  </div>
-                 <button type="submit" className="mt-8 w-full py-4 bg-amber-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-amber-700 transition-all">Log Behaviour Issue</button>
+                 <button type="submit" className="mt-8 w-full py-4 bg-amber-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-amber-700 transition-all">Log Issue</button>
                </form>
              )}
 
@@ -382,13 +349,13 @@ const EmployeeDetailPage: React.FC = () => {
                )}
 
                {activeTab === 'evaluations' && (
-                 empEvals.length === 0 ? <p className="col-span-full text-center py-20 text-slate-300 font-bold uppercase tracking-widest text-[10px]">No Historical Evaluations</p> : 
+                 empEvals.length === 0 ? <p className="col-span-full text-center py-20 text-slate-300 font-bold uppercase tracking-widest text-[10px]">No Evaluations Recorded</p> : 
                  empEvals.map(ev => (
                    <div key={ev.id} className="p-8 bg-white border border-slate-100 rounded-[2.5rem] hover:shadow-2xl transition-all relative">
                      <div className="flex justify-between items-start mb-4">
                        <div>
                          <p className="text-2xl font-black text-slate-900 tracking-tight">{ev.score}%</p>
-                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{ev.year} Annual Review</p>
+                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">{ev.year} Review</p>
                        </div>
                        <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
                          ev.rating === 'Exceeds' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
@@ -401,7 +368,7 @@ const EmployeeDetailPage: React.FC = () => {
                )}
 
                {activeTab === 'work_issues' && (
-                 empWorkIssues.length === 0 ? <p className="col-span-full text-center py-20 text-slate-300 font-bold uppercase tracking-widest text-[10px]">Log Clear</p> : 
+                 empWorkIssues.length === 0 ? <p className="col-span-full text-center py-20 text-slate-300 font-bold uppercase tracking-widest text-[10px]">No Work Issues Recorded</p> : 
                  empWorkIssues.map(note => (
                    <div key={note.id} className="p-8 border border-slate-100 bg-slate-900 text-white rounded-[2.5rem] hover:shadow-xl transition-all mb-4">
                      <div className="flex justify-between items-start mb-4">
@@ -409,15 +376,14 @@ const EmployeeDetailPage: React.FC = () => {
                        <span className="text-[9px] font-black opacity-40">{note.date}</span>
                      </div>
                      <p className="text-slate-300 text-xs leading-relaxed">{note.text}</p>
-                     <p className="mt-4 text-[8px] font-black uppercase tracking-widest opacity-30">Witness: {note.authorName}</p>
                    </div>
                  ))
                )}
 
                {activeTab === 'behaviour_issues' && (
-                 empBehaviourIssues.length === 0 ? <p className="col-span-full text-center py-20 text-slate-300 font-bold uppercase tracking-widest text-[10px]">Behaviour Clean</p> : 
+                 empBehaviourIssues.length === 0 ? <p className="col-span-full text-center py-20 text-slate-300 font-bold uppercase tracking-widest text-[10px]">No Behaviour Issues Recorded</p> : 
                  empBehaviourIssues.map(o => (
-                   <div key={o.id} className="p-8 border-l-8 border-l-amber-400 border border-slate-100 rounded-[2.5rem] bg-white hover:shadow-2xl transition-all duration-500 mb-4">
+                   <div key={o.id} className="p-8 border-l-8 border-l-amber-400 border border-slate-100 rounded-[2.5rem] bg-white hover:shadow-2xl transition-all mb-4">
                      <div className="flex justify-between items-center mb-4">
                        <span className="text-lg font-black text-slate-800 tracking-tight">{o.date}</span>
                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${o.status === 'open' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'}`}>{o.status}</span>

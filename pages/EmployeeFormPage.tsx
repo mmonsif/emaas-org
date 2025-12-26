@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import { Employee } from '../types';
+import { Employee, UserRole } from '../types';
 
 const EmployeeFormPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -20,7 +20,7 @@ const EmployeeFormPage: React.FC = () => {
     department: departments[0] || '',
     role: '',
     email: '',
-    password: '',
+    password: 'password', // Default password for new records
     hireDate: new Date().toISOString().split('T')[0],
     username: '',
     active: true,
@@ -28,12 +28,17 @@ const EmployeeFormPage: React.FC = () => {
     profilePicture: ''
   });
 
+  const [accessLevel, setAccessLevel] = useState<UserRole>('employee');
+
   useEffect(() => {
     if (isEdit) {
       const existing = employees.find(e => e.id === id);
-      if (existing) setFormData(existing);
+      if (existing) {
+        setFormData(existing);
+        setAccessLevel(existing.role as UserRole || 'employee');
+      }
     }
-  }, [id, employees, isEdit]);
+  }, [id, employees, isEdit, departments]);
 
   if (!isAdmin) return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
@@ -41,18 +46,23 @@ const EmployeeFormPage: React.FC = () => {
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
       </div>
       <p className="text-slate-600 font-bold uppercase tracking-widest text-sm text-center">Unauthorized Access Denied</p>
-      <button onClick={() => navigate('/employees')} className="text-indigo-600 font-black uppercase text-xs hover:underline">Return to safety</button>
+      <button onClick={() => navigate('/employees')} className="text-indigo-600 font-black uppercase text-xs hover:underline">Return to list</button>
     </div>
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isEdit) {
-      updateEmployee(formData as Employee);
-    } else {
-      addEmployee(formData as Omit<Employee, 'id'>);
+    try {
+      const payload = { ...formData, role: accessLevel };
+      if (isEdit) {
+        await updateEmployee(payload as Employee);
+      } else {
+        await addEmployee(payload as Omit<Employee, 'id'>);
+      }
+      navigate('/employees');
+    } catch (err) {
+      alert("Failed to save personnel record. Check console for details.");
     }
-    navigate('/employees');
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,9 +85,8 @@ const EmployeeFormPage: React.FC = () => {
             <div>
               <h2 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">
                 {isEdit ? 'Refine Personnel' : 'Onboard New'} <br /> 
-                <span className="text-indigo-600">Infrastructure</span>
+                <span className="text-indigo-600">Personnel Record</span>
               </h2>
-              <p className="text-slate-400 text-sm font-bold uppercase tracking-widest mt-4">Corporate Human Capital Management • Secure Protocol</p>
             </div>
             <div className="relative group">
               <div className="w-40 h-40 rounded-[2.5rem] bg-slate-50 border-4 border-white shadow-2xl flex items-center justify-center text-slate-200 overflow-hidden transition-all duration-500 group-hover:scale-105">
@@ -100,7 +109,7 @@ const EmployeeFormPage: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Legal Name</label>
-                <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold placeholder:text-slate-300" placeholder="e.g. Johnathan S. Archer" />
+                <input type="text" required value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold placeholder:text-slate-300" placeholder="e.g. Johnathan Doe" />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Assigned Division</label>
@@ -114,18 +123,30 @@ const EmployeeFormPage: React.FC = () => {
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Official Communications</label>
-                <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold placeholder:text-slate-300" placeholder="name@skyport.com" />
+                <input type="email" required value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold placeholder:text-slate-300" placeholder="name@company.com" />
               </div>
               <div className="md:col-span-full border-b border-slate-100 pb-2 mt-4">
                 <h4 className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em]">Access Control & Security</h4>
               </div>
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Terminal Username</label>
-                <input type="text" required value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold placeholder:text-slate-300" placeholder="u_jarcher" />
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Account Username</label>
+                <input type="text" required value={formData.username} onChange={e => setFormData({ ...formData, username: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold placeholder:text-slate-300" placeholder="jdoe_88" />
               </div>
               <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Security Key (Password)</label>
                 <input type="password" required value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold" placeholder="••••••••" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">System Access Level</label>
+                <select 
+                  value={accessLevel} 
+                  onChange={e => setAccessLevel(e.target.value as UserRole)} 
+                  className="w-full px-6 py-4 bg-slate-50 border border-transparent rounded-[1.25rem] outline-none focus:ring-4 focus:ring-indigo-100 focus:bg-white focus:border-indigo-100 transition-all text-sm font-bold"
+                >
+                  <option value="employee">Employee (Restricted)</option>
+                  <option value="manager">Manager (Mid-Level)</option>
+                  <option value="admin">Admin (Full Access)</option>
+                </select>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row items-center sm:justify-between gap-6 p-8 bg-slate-50 rounded-[2.5rem] border border-slate-100">
@@ -135,17 +156,17 @@ const EmployeeFormPage: React.FC = () => {
                   <svg className="w-5 h-5 absolute top-1.5 left-1.5 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="4" d="M5 13l4 4L19 7" /></svg>
                 </div>
                 <div>
-                  <label htmlFor="active" className="text-sm font-black text-slate-800 uppercase tracking-tight cursor-pointer">Live Personnel State</label>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Enables terminal access and data logging</p>
+                  <label htmlFor="active" className="text-sm font-black text-slate-800 uppercase tracking-tight cursor-pointer">Active Personnel State</label>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Enables access and data logging</p>
                 </div>
               </div>
             </div>
             <div className="pt-10 flex flex-col md:flex-row gap-6 items-center">
               <button type="submit" className="w-full md:w-auto md:flex-1 bg-slate-900 text-white font-black py-5 rounded-[2rem] shadow-2xl shadow-slate-900/20 hover:bg-indigo-600 hover:translate-y-[-4px] transition-all active:scale-95 uppercase tracking-[0.2em] text-sm">
-                {isEdit ? 'Authorize Record Update' : 'Initialize Onboarding'}
+                {isEdit ? 'Update Record' : 'Initialize Onboarding'}
               </button>
               <button type="button" onClick={() => navigate('/employees')} className="w-full md:w-64 py-5 text-slate-400 font-black hover:bg-slate-50 rounded-[2rem] transition-all uppercase tracking-[0.2em] text-sm">
-                Cancel Protocol
+                Cancel
               </button>
             </div>
           </form>

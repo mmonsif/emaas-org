@@ -31,7 +31,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <div className="p-6 flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 bg-indigo-500 rounded-lg flex items-center justify-center font-bold text-xl">SP</div>
-          <span className="text-xl font-bold tracking-tight">SkyPort</span>
+          <span className="text-xl font-bold tracking-tight">Staff Performance</span>
         </div>
         <button className="lg:hidden text-slate-400" onClick={() => setIsSidebarOpen(false)}>
           <Icons.X />
