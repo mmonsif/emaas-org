@@ -11,38 +11,39 @@ export const INITIAL_DEPARTMENTS = [
   "HR & Admin"
 ];
 
+// Using UUID-like strings for better DB simulation
 export const MOCK_USERS: User[] = [
-  { id: '1', username: 'admin', password: 'password', name: 'John Admin', role: 'admin', department: 'HR & Admin', email: 'admin@skyport.com' },
-  { id: '2', username: 'mgr_ramp', password: 'password', name: 'Sarah Manager', role: 'manager', department: 'Ramp Operations', email: 'sarah.m@skyport.com' },
-  { id: '3', username: 'emp_ramp1', password: 'password', name: 'Mike Ground', role: 'employee', department: 'Ramp Operations', email: 'mike.g@skyport.com' },
-  { id: '4', username: 'emp_bagg1', password: 'password', name: 'Lisa Bags', role: 'employee', department: 'Baggage Handling', email: 'lisa.b@skyport.com' },
+  { id: 'u1111111-1111-1111-1111-111111111111', username: 'admin', password: 'password', name: 'John Admin', role: 'admin', department: 'HR & Admin', email: 'admin@skyport.com' },
+  { id: 'u2222222-2222-2222-2222-222222222222', username: 'mgr_ramp', password: 'password', name: 'Sarah Manager', role: 'manager', department: 'Ramp Operations', email: 'sarah.m@skyport.com' },
+  { id: 'u3333333-3333-3333-3333-333333333333', username: 'emp_ramp1', password: 'password', name: 'Mike Ground', role: 'employee', department: 'Ramp Operations', email: 'mike.g@skyport.com' },
+  { id: 'u4444444-4444-4444-4444-444444444444', username: 'emp_bagg1', password: 'password', name: 'Lisa Bags', role: 'employee', department: 'Baggage Handling', email: 'lisa.b@skyport.com' },
 ];
 
 export const MOCK_EMPLOYEES: Employee[] = [
-  { id: '1', name: 'John Admin', department: 'HR & Admin', role: 'HR Director', email: 'admin@skyport.com', hireDate: '2020-01-15', username: 'admin', password: 'password', active: true, overallScore: 95 },
-  { id: '2', name: 'Sarah Manager', department: 'Ramp Operations', role: 'Operations Manager', email: 'sarah.m@skyport.com', hireDate: '2021-03-22', username: 'mgr_ramp', password: 'password', active: true, overallScore: 88 },
-  { id: '3', name: 'Mike Ground', department: 'Ramp Operations', role: 'Ground Handler', email: 'mike.g@skyport.com', hireDate: '2022-06-10', username: 'emp_ramp1', password: 'password', active: true, overallScore: 78 },
-  { id: '4', name: 'Lisa Bags', department: 'Baggage Handling', role: 'Baggage Agent', email: 'lisa.b@skyport.com', hireDate: '2022-09-05', username: 'emp_bagg1', password: 'password', active: true, overallScore: 82 },
-  { id: '5', name: 'Tom Tech', department: 'Fleet Maintenance', role: 'Lead Mechanic', email: 'tom.t@skyport.com', hireDate: '2019-11-30', username: 'tom_tech', password: 'password', active: true, overallScore: 92 },
+  { id: 'u1111111-1111-1111-1111-111111111111', name: 'John Admin', department: 'HR & Admin', role: 'HR Director', email: 'admin@skyport.com', hireDate: '2020-01-15', username: 'admin', password: 'password', active: true, overallScore: 95 },
+  { id: 'u2222222-2222-2222-2222-222222222222', name: 'Sarah Manager', department: 'Ramp Operations', role: 'Operations Manager', email: 'sarah.m@skyport.com', hireDate: '2021-03-22', username: 'mgr_ramp', password: 'password', active: true, overallScore: 88 },
+  { id: 'u3333333-3333-3333-3333-333333333333', name: 'Mike Ground', department: 'Ramp Operations', role: 'Ground Handler', email: 'mike.g@skyport.com', hireDate: '2022-06-10', username: 'emp_ramp1', password: 'password', active: true, overallScore: 78 },
+  { id: 'u4444444-4444-4444-4444-444444444444', name: 'Lisa Bags', department: 'Baggage Handling', role: 'Baggage Agent', email: 'lisa.b@skyport.com', hireDate: '2022-09-05', username: 'emp_bagg1', password: 'password', active: true, overallScore: 82 },
+  { id: 'u5555555-5555-5555-5555-555555555555', name: 'Tom Tech', department: 'Fleet Maintenance', role: 'Lead Mechanic', email: 'tom.t@skyport.com', hireDate: '2019-11-30', username: 'tom_tech', password: 'password', active: true, overallScore: 92 },
 ];
 
 export const MOCK_EVALUATIONS: PerformanceEvaluation[] = [
-  { id: 'e1', employeeId: '3', year: 2024, date: '2024-12-01', score: 78, summary: 'Good progress, but needs better communication on ramp.', rating: 'Meets' },
-  { id: 'e2', employeeId: '4', year: 2024, date: '2024-11-15', score: 82, summary: 'Reliable and punctual. Handles luggage carefully.', rating: 'Meets' },
+  { id: 'e1', employeeId: 'u3333333-3333-3333-3333-333333333333', year: 2024, date: '2024-12-01', score: 78, summary: 'Good progress, but needs better communication on ramp.', rating: 'Meets' },
+  { id: 'e2', employeeId: 'u4444444-4444-4444-4444-444444444444', year: 2024, date: '2024-11-15', score: 82, summary: 'Reliable and punctual. Handles luggage carefully.', rating: 'Meets' },
 ];
 
 export const MOCK_NOTES: ManagerNote[] = [
-  { id: 'n1', employeeId: '3', date: '2024-05-12', authorId: '2', authorName: 'Sarah Manager', title: 'Late for shift', text: 'Arrived 15 minutes late for the morning ramp shift. Verbal warning given.' },
-  { id: 'n2', employeeId: '3', date: '2024-07-20', authorId: '2', authorName: 'Sarah Manager', title: 'Great performance during storm', text: 'Mike handled the aircraft turnaround efficiently despite heavy rain.' },
+  { id: 'n1', employeeId: 'u3333333-3333-3333-3333-333333333333', date: '2024-05-12', authorId: 'u2222222-2222-2222-2222-222222222222', authorName: 'Sarah Manager', title: 'Late for shift', text: 'Arrived 15 minutes late for the morning ramp shift. Verbal warning given.' },
+  { id: 'n2', employeeId: 'u3333333-3333-3333-3333-333333333333', date: '2024-07-20', authorId: 'u2222222-2222-2222-2222-222222222222', authorName: 'Sarah Manager', title: 'Great performance during storm', text: 'Mike handled the aircraft turnaround efficiently despite heavy rain.' },
 ];
 
 export const MOCK_LEAVES: LeaveRecord[] = [
-  { id: 'l1', employeeId: '3', date: '2024-08-10', type: 'sick', duration: 1, comment: 'Flu symptoms' },
-  { id: 'l2', employeeId: '3', date: '2024-10-05', type: 'vacation', duration: 5, comment: 'Annual leave' },
+  { id: 'l1', employeeId: 'u3333333-3333-3333-3333-333333333333', date: '2024-08-10', type: 'sick', duration: 1, comment: 'Flu symptoms' },
+  { id: 'l2', employeeId: 'u3333333-3333-3333-3333-333333333333', date: '2024-10-05', type: 'vacation', duration: 5, comment: 'Annual leave' },
 ];
 
 export const MOCK_OBSERVATIONS: Observation[] = [
-  { id: 'o1', employeeId: '3', date: '2024-09-12', description: 'Safety vest not fully zipped during refueling operation.', status: 'closed', actionPlan: 'Retraining on PPE protocols.' },
+  { id: 'o1', employeeId: 'u3333333-3333-3333-3333-333333333333', date: '2024-09-12', description: 'Safety vest not fully zipped during refueling operation.', status: 'closed', actionPlan: 'Retraining on PPE protocols.' },
 ];
 
 // Icons

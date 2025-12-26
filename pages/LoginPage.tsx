@@ -6,20 +6,23 @@ import { UserRole } from '../types';
 
 const LoginPage: React.FC = () => {
   const [role, setRole] = useState<UserRole>('employee');
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const success = login(username, password, role);
+    setIsSubmitting(true);
+    const success = await login(email, password, role);
     if (success) {
       navigate('/');
     } else {
-      setError('Invalid credentials for the selected role.');
+      setError('Invalid credentials for the selected role or account inactive.');
+      setIsSubmitting(false);
     }
   };
 
@@ -55,14 +58,14 @@ const LoginPage: React.FC = () => {
           )}
           
           <div>
-            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Username</label>
+            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Account Email</label>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all text-sm font-bold"
               required
-              placeholder={`Enter ${role} username`}
+              placeholder="name@skyport.com"
             />
           </div>
 
@@ -80,9 +83,10 @@ const LoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-xl transform transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 mt-2"
+            disabled={isSubmitting}
+            className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl shadow-xl transform transition-all active:scale-95 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 mt-2 disabled:opacity-50"
           >
-            Authenticate
+            {isSubmitting ? 'Authenticating...' : 'Authenticate'}
           </button>
         </form>
 
