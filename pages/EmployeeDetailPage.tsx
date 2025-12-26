@@ -68,7 +68,6 @@ const EmployeeDetailPage: React.FC = () => {
         </head>
         <body>
           <div class="max-w-4xl mx-auto">
-            <!-- HEADER CARD -->
             <div class="pdf-card bg-indigo-900 text-white border-none shadow-2xl flex justify-between items-center p-10">
               <div class="flex items-center space-x-8">
                 ${employee.profilePicture ? 
@@ -88,7 +87,6 @@ const EmployeeDetailPage: React.FC = () => {
             </div>
 
             <div class="grid grid-cols-2 gap-8">
-              <!-- EVALUATIONS CARD -->
               <div class="pdf-card">
                 <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-2">Latest Evaluations</h2>
                 ${empEvals.length === 0 ? '<p class="text-xs text-slate-400 italic">No evaluations recorded.</p>' : empEvals.map(ev => `
@@ -102,7 +100,6 @@ const EmployeeDetailPage: React.FC = () => {
                 `).join('')}
               </div>
 
-              <!-- ATTENDANCE CARD -->
               <div class="pdf-card">
                 <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-2">Attendance Log</h2>
                 <div class="space-y-3">
@@ -118,7 +115,6 @@ const EmployeeDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <!-- WORK ISSUES CARD -->
               <div class="pdf-card">
                 <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-2">Work Issues</h2>
                 <div class="space-y-4">
@@ -134,7 +130,6 @@ const EmployeeDetailPage: React.FC = () => {
                 </div>
               </div>
 
-              <!-- BEHAVIOUR ISSUES CARD -->
               <div class="pdf-card border-l-8 border-l-amber-400">
                 <h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6 border-b pb-2">Behaviour Issues</h2>
                 <div class="space-y-4">
@@ -167,7 +162,6 @@ const EmployeeDetailPage: React.FC = () => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     addEvaluation({
-      id: Math.random().toString(36).substr(2, 9),
       employeeId: id!,
       year: parseInt(fd.get('year') as string),
       date: new Date().toISOString().split('T')[0],
@@ -182,7 +176,6 @@ const EmployeeDetailPage: React.FC = () => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     addLeave({
-      id: Math.random().toString(36).substr(2, 9),
       employeeId: id!,
       date: fd.get('date') as string,
       type: fd.get('type') as LeaveType,
@@ -196,7 +189,6 @@ const EmployeeDetailPage: React.FC = () => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     addObservation({
-      id: Math.random().toString(36).substr(2, 9),
       employeeId: id!,
       date: fd.get('date') as string,
       description: fd.get('description') as string,
@@ -210,7 +202,6 @@ const EmployeeDetailPage: React.FC = () => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     addNote({
-      id: Math.random().toString(36).substr(2, 9),
       employeeId: id!,
       date: new Date().toISOString().split('T')[0],
       authorId: user!.id,
@@ -224,7 +215,6 @@ const EmployeeDetailPage: React.FC = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700 pb-10">
       <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Sidebar */}
         <div className="w-full lg:w-96 shrink-0 space-y-6">
           <div className="bg-white rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 text-center">
             <div className="w-32 h-32 rounded-[2.5rem] bg-indigo-600 text-white flex items-center justify-center text-4xl font-black mb-6 shadow-xl border-4 border-slate-50 mx-auto overflow-hidden">
@@ -232,7 +222,6 @@ const EmployeeDetailPage: React.FC = () => {
             </div>
             <h2 className="text-3xl font-black text-slate-900 tracking-tight">{employee.name}</h2>
             <p className="text-indigo-600 text-[10px] font-black uppercase tracking-[0.25em] mt-2">{employee.role}</p>
-            
             <div className="mt-8 grid grid-cols-1 gap-3 w-full">
               <button onClick={handleRunAiAnalysis} disabled={isAiLoading} className="flex items-center justify-center w-full px-6 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-50">
                 {isAiLoading ? "Analyzing..." : "✨ AI Talent Insights"}
@@ -242,7 +231,6 @@ const EmployeeDetailPage: React.FC = () => {
               </button>
             </div>
           </div>
-
           {aiInsight && (
             <div className={`rounded-[2.5rem] p-8 text-white shadow-2xl animate-in zoom-in-95 duration-300 relative overflow-hidden ${aiError ? 'bg-red-900' : 'bg-indigo-600'}`}>
                <h4 className="text-[10px] font-black text-indigo-300 uppercase tracking-[0.2em] mb-4">AI Analysis Report</h4>
@@ -250,14 +238,12 @@ const EmployeeDetailPage: React.FC = () => {
                <button onClick={() => setAiInsight(null)} className="mt-6 text-[9px] font-black text-indigo-200 uppercase hover:text-white transition-colors underline decoration-dotted">Dismiss</button>
             </div>
           )}
-
           <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white shadow-2xl">
             <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Overall Efficiency</p>
             <h4 className="text-5xl font-black">{employee.overallScore}%</h4>
           </div>
         </div>
 
-        {/* Content Area */}
         <div className="flex-1 min-w-0 flex flex-col space-y-8">
            <div className="bg-white p-2 rounded-[2rem] shadow-xl flex gap-2 overflow-x-auto border border-slate-50 no-scrollbar">
              <button onClick={() => { setActiveTab('leaves'); setShowForm(null); }} className={`px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${activeTab === 'leaves' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-50'}`}>Attendance</button>
@@ -276,13 +262,11 @@ const EmployeeDetailPage: React.FC = () => {
                  <h3 className="text-2xl font-black text-slate-900 tracking-tight capitalize">{activeTab.replace('_', ' ')} Registry</h3>
                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest mt-1">Ground Handling Command • Protocol v3.0</p>
                </div>
-               
                <button onClick={() => setShowForm(showForm === activeTab ? null : activeTab)} className="px-6 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all flex items-center shadow-lg active:scale-95">
                  {showForm === activeTab ? "Close Form" : `Log ${activeTab.split('_')[0]}`}
                </button>
              </div>
 
-             {/* Dynamic Form Rendering */}
              {showForm === 'leaves' && (
                <form onSubmit={handleSaveLeave} className="mb-10 p-8 bg-indigo-50/50 rounded-[2rem] border border-indigo-100 animate-in slide-in-from-top-4">
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -378,7 +362,6 @@ const EmployeeDetailPage: React.FC = () => {
                </form>
              )}
 
-             {/* Tab Content Display */}
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                {activeTab === 'leaves' && (
                  empAttendance.length === 0 ? <p className="col-span-full text-center py-20 text-slate-300 font-bold uppercase tracking-widest text-[10px]">No Attendance Incidents</p> : 

@@ -10,13 +10,13 @@ interface DataContextType {
   notes: ManagerNote[];
   leaves: LeaveRecord[];
   observations: Observation[];
-  addEmployee: (emp: Employee) => Promise<void>;
+  addEmployee: (emp: Omit<Employee, 'id'>) => Promise<void>;
   updateEmployee: (emp: Employee) => Promise<void>;
   deleteEmployee: (id: string) => Promise<void>;
-  addEvaluation: (ev: PerformanceEvaluation) => Promise<void>;
-  addNote: (note: ManagerNote) => Promise<void>;
-  addLeave: (leave: LeaveRecord) => Promise<void>;
-  addObservation: (obs: Observation) => Promise<void>;
+  addEvaluation: (ev: Omit<PerformanceEvaluation, 'id'>) => Promise<void>;
+  addNote: (note: Omit<ManagerNote, 'id'>) => Promise<void>;
+  addLeave: (leave: Omit<LeaveRecord, 'id'>) => Promise<void>;
+  addObservation: (obs: Omit<Observation, 'id'>) => Promise<void>;
   addDepartment: (name: string) => Promise<void>;
   deleteDepartment: (name: string) => Promise<void>;
   updateDepartment: (oldName: string, newName: string) => Promise<void>;
@@ -34,39 +34,75 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [observations, setObservations] = useState<Observation[]>([]);
 
   const refreshData = async () => {
-    const [
-      { data: empData },
-      { data: deptData },
-      { data: evalData },
-      { data: noteData },
-      { data: leaveData },
-      { data: obsData }
-    ] = await Promise.all([
-      supabase.from('employees').select('*'),
-      supabase.from('departments').select('name'),
-      supabase.from('evaluations').select('*'),
-      supabase.from('work_issues').select('*'),
-      supabase.from('attendance_logs').select('*'),
-      supabase.from('behaviour_issues').select('*')
-    ]);
+    try {
+      const [
+        { data: empData },
+        { data: deptData },
+        { data: evalData },
+        { data: noteData },
+        { data: leaveData },
+        { data: obsData }
+      ] = await Promise.all([
+        supabase.from('employees').select('*'),
+        supabase.from('departments').select('name'),
+        supabase.from('evaluations').select('*'),
+        supabase.from('work_issues').select('*'),
+        supabase.from('attendance_logs').select('*'),
+        supabase.from('behaviour_issues').select('*')
+      ]);
 
-    if (empData) setEmployees(empData.map(e => ({ ...e, overallScore: e.overall_score, hireDate: e.hire_date, profilePicture: e.profile_picture })));
-    if (deptData) setDepartments(deptData.map(d => d.name));
-    if (evalData) setEvaluations(evalData);
-    if (noteData) setNotes(noteData.map(n => ({ ...n, employeeId: n.employee_id, authorId: n.author_id, authorName: n.author_name })));
-    if (leaveData) setLeaves(leaveData.map(l => ({ ...l, employeeId: l.employee_id })));
-    if (obsData) setObservations(obsData.map(o => ({ ...o, employeeId: o.employee_id, actionPlan: o.action_plan })));
+      if (empData) setEmployees(empData.map(e => ({ 
+        id: e.id,
+        name: e.name,
+        username: e.username,
+        role: e.role,
+        department: e.department,
+        email: e.email,
+        active: e.active,
+        overallScore: e.overall_score, 
+        hireDate: e.hire_date, 
+        profilePicture: e.profile_picture 
+      })));
+      if (deptData) setDepartments(deptData.map(d => d.name));
+      if (evalData) setEvaluations(evalData);
+      if (noteData) setNotes(noteData.map(n => ({ 
+        id: n.id,
+        employeeId: n.employee_id, 
+        authorId: n.author_id, 
+        authorName: n.author_name,
+        date: n.date,
+        title: n.title,
+        text: n.text
+      })));
+      if (leaveData) setLeaves(leaveData.map(l => ({ 
+        id: l.id,
+        employeeId: l.employee_id,
+        date: l.date,
+        type: l.type,
+        duration: l.duration,
+        comment: l.comment
+      })));
+      if (obsData) setObservations(obsData.map(o => ({ 
+        id: o.id,
+        employeeId: o.employee_id, 
+        date: o.date,
+        description: o.description,
+        status: o.status,
+        actionPlan: o.action_plan 
+      })));
+    } catch (err) {
+      console.error("Critical: Data Sync Failed", err);
+    }
   };
 
   useEffect(() => {
     refreshData();
   }, []);
 
-  const addEmployee = async (emp: Employee) => {
-    // Note: Creating a full auth user requires supabase.auth.signUp or admin functions
-    // For this context, we'll just insert into the table (assuming user exists or is being added elsewhere)
+  const addEmployee = async (emp: Omit<Employee, 'id'>) => {
+    // Standard profiles should be created via Auth trigger, 
+    // but this allows manual profile creation for existing auth users
     const { error } = await supabase.from('employees').insert([{
-      id: emp.id,
       username: emp.username,
       name: emp.name,
       role: emp.role,
@@ -99,7 +135,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!error) refreshData();
   };
   
-  const addEvaluation = async (ev: PerformanceEvaluation) => {
+  const addEvaluation = async (ev: Omit<PerformanceEvaluation, 'id'>) => {
     const { error } = await supabase.from('evaluations').insert([{
       employee_id: ev.employeeId,
       year: ev.year,
@@ -111,7 +147,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!error) refreshData();
   };
 
-  const addNote = async (note: ManagerNote) => {
+  const addNote = async (note: Omit<ManagerNote, 'id'>) => {
     const { error } = await supabase.from('work_issues').insert([{
       employee_id: note.employeeId,
       author_id: note.authorId,
@@ -123,7 +159,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!error) refreshData();
   };
 
-  const addLeave = async (leave: LeaveRecord) => {
+  const addLeave = async (leave: Omit<LeaveRecord, 'id'>) => {
     const { error } = await supabase.from('attendance_logs').insert([{
       employee_id: leave.employeeId,
       date: leave.date,
@@ -134,7 +170,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!error) refreshData();
   };
 
-  const addObservation = async (obs: Observation) => {
+  const addObservation = async (obs: Omit<Observation, 'id'>) => {
     const { error } = await supabase.from('behaviour_issues').insert([{
       employee_id: obs.employeeId,
       date: obs.date,
